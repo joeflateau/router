@@ -1,4 +1,7 @@
 # MQRouter
+[![Build Status](https://travis-ci.org/joeflateau/router.svg?branch=master)](https://travis-ci.org/joeflateau/router)
+
+A router for routing messages by topic name from message queues
 
 ### Example Usage
 ```javascript
