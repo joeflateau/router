@@ -56,4 +56,18 @@ describe("router", function(){
 
     done();
   });
+
+  it("should return value", function(done){
+    var succeeded = false;
+
+    var router = new Router();
+
+    router.add("foo/thing/attribute", function() { return true; });
+
+    succeeded = router.execute("foo/thing/attribute");
+    
+    expect(succeeded).to.be.true;
+
+    done();
+  });
 });

@@ -28,7 +28,7 @@ function Router(input){
       throw new Error("Route not valid: " + topic);
     }
     
-    handler.call(this, topic, params, payload);
+    return handler.call(this, topic, params, payload);
   }
 
   function handlers() {
