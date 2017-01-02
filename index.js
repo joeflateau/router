@@ -1,10 +1,11 @@
+function toParts(topic) {
+  return topic.split(/\//g);
+}
+
 function Router(input){
+  input = input || {};
 
   var messageHandlers;
-
-  function toParts(topic) {
-    return topic.split(/\//g);
-  }
 
   function routeMessage(topic, payload) {
     var parts = toParts(topic);
@@ -30,12 +31,12 @@ function Router(input){
     handler.call(this, topic, params, payload);
   }
 
-  function handlers(spec) {
+  function handlers() {
     var root = {};
 
-    Object.keys(spec).forEach(function(topic){
+    Object.keys(input).forEach(function(topic){
       var parent = root;
-      var topicHandler = spec[topic];
+      var topicHandler = input[topic];
       var parts = toParts(topic);
       parts.forEach(function(part){
         if (part.substring(0,1) === ":") {
@@ -55,10 +56,20 @@ function Router(input){
       parent._handler = topicHandler;
     });
 
-    return root;
+    messageHandlers = root;
   }
 
-  messageHandlers = handlers(input);
+  handlers();
+
+  this.add = function(route, callback) {
+    input[route] = callback;
+    handlers();
+  };
+
+  this.remove = function(route) {
+    delete input[route];
+    handlers();
+  };
 
   this.execute = routeMessage;
 

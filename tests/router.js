@@ -9,7 +9,6 @@ describe("router", function(){
 
     var router = new Router({
       "foo/:baz/bum": function(topic, params, payload) {
-        console.log("callback", topic, params, payload);
         expect(params).to.have.property("baz");
         expect(params.baz).to.equal("bar");
         succeeded = payload.success;
@@ -20,6 +19,38 @@ describe("router", function(){
 
     router.execute("foo/bar/bum", { success:true });
     router.execute("foo/bar/attribute", {  });
+
+    expect(succeeded).to.be.true;
+
+    done();
+  });
+
+  it("should add route", function(done){
+    var succeeded = false;
+
+    var router = new Router();
+
+    router.add("foo/thing/attribute", function() { succeeded = true; });
+
+    router.execute("foo/thing/attribute", {  });
+
+    expect(succeeded).to.be.true;
+
+    done();
+  });
+
+  it("should remove route", function(done){
+    var succeeded = true;
+
+    var router = new Router();
+
+    router.add("foo/thing/attribute", function() { succeeded = false; });
+
+    router.remove("foo/thing/attribute");
+
+    expect(() => {
+      router.execute("foo/thing/attribute", {  });
+    }).to.throw(Error);
 
     expect(succeeded).to.be.true;
 
