@@ -2,41 +2,33 @@ function toParts(topic) {
   return topic.split(/\//g);
 }
 
-function Router(input){
-  input = input || {};
+function Router(routes){
+  this._routes = routes || {};
+  this._structure = {};
+  this._parseRoutes();
+}
 
-  var messageHandlers;
-
-  function routeMessage(topic, payload) {
-    var parts = toParts(topic);
-    var parent = messageHandlers;
-    var params = {};
-    parts.forEach(function(part){
-      if (parent.hasOwnProperty(part)) {
-        parent = parent[part];
-      } else if (parent.hasOwnProperty(":")) {
-        parent = parent[":"];
-        params[parent._name] = part;
-      } else {
-        throw new Error("Route not valid: " + topic);
-      }
-    });
-    
-    var handler = parent._handler;
-
-    if (!handler) {
-      throw new Error("Route not valid: " + topic);
-    }
-    
+Router.prototype = {
+  add: function(route, callback) {
+    this._routes[route] = callback;
+    this._parseRoutes();
+  },
+  remove: function(route) {
+    delete this._routes[route];
+    this._parseRoutes();
+  },
+  execute: function(topic, payload){ 
+    var route = this._routeMessage(topic, payload);
+    var handler = route.handler;
+    var params = route.params;
     return handler.call(this, topic, params, payload);
-  }
-
-  function handlers() {
+  },
+  _parseRoutes: function() {
     var root = {};
 
-    Object.keys(input).forEach(function(topic){
+    Object.keys(this._routes).forEach((topic) => {
       var parent = root;
-      var topicHandler = input[topic];
+      var topicHandler = this._routes[topic];
       var parts = toParts(topic);
       parts.forEach(function(part){
         if (part.substring(0,1) === ":") {
@@ -56,24 +48,35 @@ function Router(input){
       parent._handler = topicHandler;
     });
 
-    messageHandlers = root;
+    this._structure = root;
+  },
+  _routeMessage: function(topic, payload) {
+    var parts = toParts(topic);
+    var parent = this._structure;
+    var params = {};
+    parts.forEach(function(part){
+      if (parent.hasOwnProperty(part)) {
+        parent = parent[part];
+      } else if (parent.hasOwnProperty(":")) {
+        parent = parent[":"];
+        params[parent._name] = part;
+      } else {
+        throw new Error("Route not valid: " + topic);
+      }
+    });
+    
+    var handler = parent._handler;
+
+    if (!handler) {
+      throw new Error("Route not valid: " + topic);
+    }
+    
+    return {
+      handler: handler,
+      params: params
+    };
   }
-
-  handlers();
-
-  this.add = function(route, callback) {
-    input[route] = callback;
-    handlers();
-  };
-
-  this.remove = function(route) {
-    delete input[route];
-    handlers();
-  };
-
-  this.execute = routeMessage;
-
-}
+};
 
 if (typeof module !== "undefined") {
   module.exports = Router;
