@@ -1,6 +1,6 @@
 {
   "name": "mqrouter",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "A tiny router for routing messages by topic name from message queues.",
   "main": "index.js",
   "directories": {
