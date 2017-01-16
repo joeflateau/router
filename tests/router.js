@@ -8,10 +8,10 @@ describe("router", function(){
     var succeeded = false;
 
     var router = new Router({
-      "foo/:baz/bum": function(topic, params, payload) {
-        expect(params).to.have.property("baz");
-        expect(params.baz).to.equal("bar");
-        succeeded = payload.success;
+      "foo/:baz/bum": function(message) {
+        expect(message.params).to.have.property("baz");
+        expect(message.params.baz).to.equal("bar");
+        succeeded = message.payload.success;
       },
       "foo/thing/attribute": function() {},
       "foo/:baz/attribute": function() {},
@@ -64,10 +64,63 @@ describe("router", function(){
 
     router.add("foo/thing/attribute", function() { return true; });
 
-    succeeded = router.execute("foo/thing/attribute");
-    
-    expect(succeeded).to.be.true;
+    router.execute("foo/thing/attribute")
+      .then((result) => {
+        succeeded = result;
+        expect(succeeded).to.be.true;
+        done();
+      });
+  });
 
-    done();
+  it("should return promise", function(done){
+    var succeeded = false;
+
+    var router = new Router();
+
+    router.add("foo/thing/attribute", function() { 
+      return Promise.resolve(true);
+    });
+
+    router.execute("foo/thing/attribute")
+      .then((result) => {
+        succeeded = result;
+        expect(succeeded).to.be.true;
+        done();
+      });
+  });
+
+  it("should work with middleware", function(done){
+    var succeeded = 0;
+
+    var router1 = new Router();
+    var router2 = new Router();
+
+    router1.use(function(message){
+      message.succeeded = true;
+    });
+
+    router1.use(function(message){
+      if (message.succeeded) {
+        succeeded++;
+      }
+    });
+
+    router1.add("things/:thing/foo", function(message){
+      if (message.succeeded) {
+        succeeded++;
+      }
+    });
+
+    router2.add("things/:thing/foo", function(){
+      succeeded++;
+    });
+
+    Promise.all([
+      router1.execute("things/thing/foo", {}),
+      router2.execute("things/thing/foo", {})
+    ]).then(() => {
+      expect(succeeded).to.equal(3);
+      done();
+    });
   });
 });

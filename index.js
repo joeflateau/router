@@ -3,12 +3,16 @@ function toParts(topic) {
 }
 
 function Router(routes){
+  this._middleware = [];
   this._routes = routes || {};
   this._structure = {};
   this._parseRoutes();
 }
 
 Router.prototype = {
+  use: function(callback){
+    this._middleware.push(callback);
+  },
   add: function(route, callback) {
     this._routes[route] = callback;
     this._parseRoutes();
@@ -21,7 +25,22 @@ Router.prototype = {
     var route = this._routeMessage(topic, payload);
     var handler = route.handler;
     var params = route.params;
-    return handler.call(this, topic, params, payload);
+    var middlewares = this._middleware.slice();
+
+    var message = {
+      topic: topic,
+      params: params,
+      payload: payload
+    };
+
+    function executeNext(){
+      if (middlewares.length === 0) {
+        return Promise.resolve(handler.call(this, message));
+      }
+      var middleware = middlewares.shift();
+      return Promise.resolve(middleware.call(this, message)).then(executeNext.bind(this));
+    }
+    return executeNext();
   },
   _parseRoutes: function() {
     var root = {};
@@ -50,7 +69,7 @@ Router.prototype = {
 
     this._structure = root;
   },
-  _routeMessage: function(topic, payload) {
+  _routeMessage: function(topic) {
     var parts = toParts(topic);
     var parent = this._structure;
     var params = {};
