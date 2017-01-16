@@ -25,7 +25,11 @@ var router = new Router();
 
 ```javascript
 var routes = {
-  "things/:thing/online": function(topic, params, payload) {}
+  "things/:thing/online": function(message) {
+    var topic = message.topic;
+    var params = message.params;
+    var payload = message.payload;
+  }
 };
 var router = new Router(routes);
 ```
@@ -52,14 +56,15 @@ router.execute("things/esp-123/online", true);
 
 ```javascript
 var router = new Router({
-  "things/:thing/online": function(topic, params, payload) {
-    var thing = params.thing;
-    console.log(`thing ${thing} is ${payload.online ? 'online' : 'offline'}`);
+  "things/:thing/online": function(message) {
+    var thing = message.params.thing;
+    console.log(`thing ${thing} is ${message.payload.online ? 'online' : 'offline'}`);
   }
 });
 
-router.add("things/:thing/led", function(topic, params, payload){
-  var thing = params.thing;
+router.add("things/:thing/led", function(message){
+  var payload = message.payload;
+  var thing = message.params.thing;
   setRgbPwm(thing, payload.r, payload.g, payload.b);
 });
 

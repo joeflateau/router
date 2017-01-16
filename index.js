@@ -25,7 +25,6 @@ Router.prototype = {
     var route = this._routeMessage(topic, payload);
     var handler = route.handler;
     var params = route.params;
-    var middlewares = this._middleware.slice();
 
     var message = {
       topic: topic,
@@ -33,6 +32,7 @@ Router.prototype = {
       payload: payload
     };
 
+    var middlewares = this._middleware.slice();
     function executeNext(){
       if (middlewares.length === 0) {
         return Promise.resolve(handler.call(this, message));

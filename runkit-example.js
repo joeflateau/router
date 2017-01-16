@@ -1,10 +1,10 @@
-var Router = require("mqrouter")
+var Router = require("mqrouter");
 
 var router = new Router({
-    "things/:thing/online": function(topic, params, online) {
-        var thingId = params.thing;
-        var onlineString = online ? 'online' : 'offline';
-        var thingString = `${params.thing} is ${onlineString}`;
+    "things/:thing/online": function(message) {
+        var thingId = message.params.thing;
+        var onlineString = message.payload ? 'online' : 'offline';
+        var thingString = `${thingId} is ${onlineString}`;
         
         console.log(thingString);
         
@@ -15,4 +15,7 @@ var router = new Router({
 var result1 = router.execute("things/my-thing/online", true);
 var result2 = router.execute("things/my-other-thing/online", false);
 
-[result1, result2];
+Promise.all([result1, result2])
+  .then(function(results){
+    console.log(results);
+  });
